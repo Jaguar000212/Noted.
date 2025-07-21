@@ -4,44 +4,45 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.jaguar.noted.ui.theme.NotedTheme
+import com.jaguar.noted.json.NotesJSONSerializer
+import com.jaguar.noted.navigation.Navigation
+import com.jaguar.noted.objects.Note
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+//        addSampleNotes()
         setContent {
-            NotedTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            Navigation()
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    NotedTheme {
-        Greeting("Android")
+    private fun addSampleNotes() {
+        val notes = listOf(
+            Note(
+                title = "Sample Note 1",
+                description = "This is the description for Sample Note 1.",
+                tags = emptyList(),
+                dueDate = null,
+                dueTime = null,
+                isCompleted = false
+            ), Note(
+                "Sample Note 2",
+                "This is the description for Sample Note 2.",
+                emptyList(),
+                null,
+                null,
+                false
+            ), Note(
+                "Sample Note 3",
+                "This is the description for Sample Note 3.",
+                emptyList(),
+                null,
+                "09:00",
+                true
+            )
+        )
+        NotesJSONSerializer("notes.json", context = this).saveNotes(notes)
     }
 }
