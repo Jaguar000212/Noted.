@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -15,8 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.jaguar.noted.objects.Note
+import com.jaguar.noted.ui.theme.Typography
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun NoteCard(note: Note, onCheckClick: () -> Unit, onClick: () -> Unit) {
@@ -37,14 +43,40 @@ fun NoteCard(note: Note, onCheckClick: () -> Unit, onClick: () -> Unit) {
                 modifier = Modifier
                     .padding(8.dp)
                     .clickable { onCheckClick() })
-            Text(note.getTitle())
+            Text(
+                note.getTitle(),
+                textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                color = if (isCompleted) Color.Gray else Color.Unspecified
+            )
         }
         if (note.getDueTime() != null) Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Outlined.Info, "Due Time", modifier = Modifier.padding(8.dp)
-            )
-            Text(note.getDueTime()!!)
+            val dueCalendar = Calendar.getInstance()
+            dueCalendar.timeInMillis = note.getDueTime()!!
+            val currentCalendar = Calendar.getInstance()
+            currentCalendar.timeInMillis = System.currentTimeMillis()
 
+            Text(
+                if (dueCalendar.get(Calendar.DAY_OF_YEAR) == currentCalendar.get(Calendar.DAY_OF_YEAR) && dueCalendar.get(
+                        Calendar.YEAR
+                    ) == currentCalendar.get(Calendar.YEAR)
+                ) {
+                    SimpleDateFormat("HH:mm", Locale.getDefault()).format(dueCalendar.time)
+                        .uppercase()
+                } else {
+                    SimpleDateFormat("dd-MMM", Locale.getDefault()).format(dueCalendar.time)
+                        .uppercase()
+                },
+                style = Typography.bodySmall,
+                color = if (dueCalendar.timeInMillis < System.currentTimeMillis() && !isCompleted) Color.Red else Color.Gray
+            )
+            Icon(
+                Icons.Outlined.Info,
+                "Info",
+                tint = Color.Gray,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(16.dp)
+            )
         }
     }
 }

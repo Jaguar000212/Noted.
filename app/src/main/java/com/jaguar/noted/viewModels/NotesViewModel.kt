@@ -48,4 +48,13 @@ class NotesViewModel(private val serializer: NotesJSONSerializer) : ViewModel() 
         }
     }
 
+    fun deleteNote(note: Note) {
+        viewModelScope.launch {
+            val notes = _notes.value.toMutableList()
+            notes.remove(note)
+            saveNotes(notes)
+        }
+    }
+
+
 }

@@ -8,49 +8,51 @@ data class Note(
     private var title: String = "",
     private var description: String = "",
     private var tags: List<String> = emptyList(),
-    private var dueDate: String? = "",
-    private var dueTime: String? = "",
-    private var isCompleted: Boolean = false
+    private var dueTime: Long? = null,
+    private var isCompleted: Boolean = false,
+    private var subTasks: List<Note> = emptyList()
 ) {
-
     constructor(
         title: String,
         description: String,
         tags: List<String>,
-        dueDate: String?,
-        dueTime: String?,
-        isCompleted: Boolean
+        dueTime: Long?,
+        isCompleted: Boolean,
+        subTasks: List<Note>
     ) : this() {
         this.id = UUID.randomUUID().toString()
         this.title = title
         this.description = description
         this.tags = tags
-        this.dueDate = dueDate
         this.dueTime = dueTime
         this.isCompleted = isCompleted
+        this.subTasks = subTasks
     }
 
     constructor(jsonObject: JSONObject) : this() {
-        val jsonArray = jsonObject.optJSONArray("tags")
+        val jsonTags = jsonObject.optJSONArray("tags")
+        val jsonSubTasks = jsonObject.optJSONArray("subTasks")
 
         this.id = jsonObject.optString("id")
         this.title = jsonObject.optString("title")
         this.description = jsonObject.optString("description")
-        this.tags = (0 until (jsonArray?.length() ?: 0)).map { i ->
-            jsonArray!!.optString(i, null)
+        this.tags = (0 until (jsonTags?.length() ?: 0)).map { i ->
+            jsonTags!!.optString(i, null)
         }
-        this.dueDate = jsonObject.optString("date", null)
-        this.dueTime = jsonObject.optString("time", null)
+        this.dueTime = jsonObject.optLong("time", 0)
         this.isCompleted = jsonObject.optBoolean("isCompleted")
+        this.subTasks = (0 until (jsonSubTasks?.length() ?: 0)).map { i ->
+            Note(jsonSubTasks!!.getJSONObject(i))
+        }
     }
 
     fun getID(): String = this.id
     fun getTitle(): String = this.title
     fun getDescription(): String = this.description
     fun getTags(): List<String> = this.tags
-    fun getDueDate(): String? = this.dueDate
-    fun getDueTime(): String? = this.dueTime
+    fun getDueTime(): Long? = this.dueTime
     fun getIsCompleted(): Boolean = this.isCompleted
+    fun getSubTasks(): List<Note> = this.subTasks
 
     fun setTitle(title: String) {
         this.title = title
@@ -64,16 +66,20 @@ data class Note(
         this.tags = tags
     }
 
-    fun setDueDate(dueDate: String?) {
-        this.dueDate = dueDate
-    }
-
-    fun setDueTime(dueTime: String?) {
+    fun setDueTime(dueTime: Long?) {
         this.dueTime = dueTime
     }
 
     fun setIsCompleted(isCompleted: Boolean) {
         this.isCompleted = isCompleted
+    }
+
+    fun addSubTask(subTask: Note) {
+        this.subTasks += subTask
+    }
+
+    fun removeSubTask(subTask: Note) {
+        this.subTasks -= subTask
     }
 
     override fun toString(): String {
@@ -82,7 +88,6 @@ data class Note(
             Title: $title
             Description: $description
             Tags: $tags
-            Due Date: $dueDate
             Due Time: $dueTime
             Is Completed: $isCompleted
             """.trimIndent()
@@ -95,9 +100,11 @@ data class Note(
             jsonObject.put("title", title)
             jsonObject.put("description", description)
             jsonObject.put("tags", tags)
-            jsonObject.put("date", dueDate)
             jsonObject.put("time", dueTime)
             jsonObject.put("isCompleted", isCompleted)
+            val jsonArray = org.json.JSONArray()
+            subTasks.forEach { subTask -> jsonArray.put(subTask.toJSON()) }
+            jsonObject.put("subTasks", jsonArray)
         } catch (e: Exception) {
             e.printStackTrace()
         }

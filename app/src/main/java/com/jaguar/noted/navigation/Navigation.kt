@@ -9,9 +9,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.jaguar.noted.json.NotesJSONSerializer
-import com.jaguar.noted.ui.Home
 import com.jaguar.noted.ui.bars.Header
 import com.jaguar.noted.ui.bars.Navbar
+import com.jaguar.noted.ui.screens.Home
 import com.jaguar.noted.ui.theme.NotedTheme
 import com.jaguar.noted.viewModels.NotesViewModel
 
