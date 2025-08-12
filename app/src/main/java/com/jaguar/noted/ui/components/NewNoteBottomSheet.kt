@@ -33,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.objects.Note
+import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.ui.theme.Typography
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -239,7 +239,6 @@ fun NewNoteBottomSheet(
                                 tags = noteTags,
                                 dueTime = calendar.timeInMillis,
                                 isCompleted = false,
-                                subTasks = noteSubTasks
                             )
                         )
                         onDismiss()

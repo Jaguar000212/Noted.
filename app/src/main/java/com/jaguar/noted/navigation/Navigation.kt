@@ -5,15 +5,17 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.jaguar.noted.json.NotesJSONSerializer
+import com.jaguar.noted.backend.databases.NotesDatabase
+import com.jaguar.noted.backend.viewModels.NotesViewModel
+import com.jaguar.noted.backend.viewModels.NotesViewModelFactory
 import com.jaguar.noted.ui.bars.Header
 import com.jaguar.noted.ui.bars.Navbar
 import com.jaguar.noted.ui.screens.Home
 import com.jaguar.noted.ui.theme.NotedTheme
-import com.jaguar.noted.viewModels.NotesViewModel
 
 @Composable
 fun Navigation() {
@@ -21,14 +23,16 @@ fun Navigation() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val serializer = NotesJSONSerializer("notes.json", context = context)
-    val notesViewModel = NotesViewModel(serializer)
+    val notesViewModel: NotesViewModel = remember {
+        NotesViewModelFactory(
+            NotesDatabase.getDatabase(context).noteDao()
+        ).create(NotesViewModel::class.java)
+    }
 
     NotedTheme {
         Scaffold(
             topBar = { Header(drawerState = drawerState, scope = scope) },
-            bottomBar = { Navbar(notesViewModel) }
-        ) { innerPadding ->
+            bottomBar = { Navbar(notesViewModel) }) { innerPadding ->
             Home(notesViewModel = notesViewModel, modifier = Modifier.padding(innerPadding))
         }
     }

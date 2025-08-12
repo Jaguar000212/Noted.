@@ -29,8 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.jaguar.noted.backend.viewModels.NotesViewModel
 import com.jaguar.noted.ui.components.NewNoteBottomSheet
-import com.jaguar.noted.viewModels.NotesViewModel
 
 @Composable
 fun Option(icon: ImageVector, text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -57,7 +57,6 @@ fun Navbar(notesViewModel: NotesViewModel) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Option(

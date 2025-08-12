@@ -2,9 +2,7 @@ package com.jaguar.noted.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
@@ -18,15 +16,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.objects.Note
+import com.jaguar.noted.backend.entities.Note
+import com.jaguar.noted.backend.viewModels.NotesViewModel
 import com.jaguar.noted.ui.components.NoteCard
 import com.jaguar.noted.ui.components.ViewNoteBottomSheet
-import com.jaguar.noted.viewModels.NotesViewModel
 
 @Composable
 fun Home(notesViewModel: NotesViewModel, modifier: Modifier) {
     val context = LocalContext.current
-    val notes by notesViewModel.notes.collectAsState()
+    val notes: List<Note> by notesViewModel.notes.collectAsState(emptyList())
 
     var viewNoteSheet by remember { mutableStateOf(false) }
     var selectedNote by remember { mutableStateOf<Note?>(null) }
@@ -38,26 +36,12 @@ fun Home(notesViewModel: NotesViewModel, modifier: Modifier) {
             if (notes.isEmpty()) item { Text("No notes found") }
             else items(notes) { note ->
                 NoteCard(note, {
-                    notesViewModel.updateNote(note.copy(isCompleted = !note.getIsCompleted()))
+                    notesViewModel.updateNote(note.copy(isCompleted = !note.isCompleted))
                     Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
                 }, {
                     selectedNote = note
                     viewNoteSheet = true
                 })
-                if (note.getSubTasks().isNotEmpty()) {
-                    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
-                        note.getSubTasks().forEach { subTask ->
-                            NoteCard(subTask, {
-                                notesViewModel.updateNote(subTask.copy(isCompleted = !subTask.getIsCompleted()))
-                                Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
-                            }, {
-                                notesViewModel.updateNote(subTask.copy(isCompleted = !subTask.getIsCompleted()))
-                                Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
-                            })
-                            HorizontalDivider()
-                        }
-                    }
-                }
                 HorizontalDivider()
             }
         }
@@ -67,8 +51,7 @@ fun Home(notesViewModel: NotesViewModel, modifier: Modifier) {
                 note = selectedNote!!,
                 onDismiss = { viewNoteSheet = false },
                 onDelete = { notesViewModel.deleteNote(selectedNote!!) },
-                onSave = { notesViewModel.updateNote(it) }
-            )
+                onSave = { notesViewModel.updateNote(it) })
         }
     }
 }

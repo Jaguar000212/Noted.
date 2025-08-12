@@ -33,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.objects.Note
+import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.ui.theme.Typography
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -50,10 +50,9 @@ fun ViewNoteBottomSheet(
 ) {
     val context = LocalContext.current
 
-    var noteTitle by remember { mutableStateOf(note.getTitle()) }
-    var noteDescription by remember { mutableStateOf(note.getDescription()) }
-    var noteTags by remember { mutableStateOf(note.getTags()) }
-    var noteSubTasks by remember { mutableStateOf(note.getSubTasks()) }
+    var noteTitle by remember { mutableStateOf(note.title) }
+    var noteDescription by remember { mutableStateOf(note.description) }
+    var noteTags by remember { mutableStateOf(note.tags) }
 
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -62,7 +61,7 @@ fun ViewNoteBottomSheet(
     var showTimePicker by remember { mutableStateOf(false) }
 
     val calendar = Calendar.getInstance()
-    var selectedDateMillis by remember { mutableStateOf(note.getDueTime()) }
+    var selectedDateMillis by remember { mutableStateOf(note.dueTime) }
     selectedDateMillis?.let { calendar.timeInMillis = it }
     var selectedHour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR)) }
     var selectedMinute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
@@ -245,7 +244,6 @@ fun ViewNoteBottomSheet(
                                 tags = noteTags,
                                 dueTime = calendar.timeInMillis,
                                 isCompleted = false,
-                                subTasks = noteSubTasks
                             )
                         )
                         onDismiss()

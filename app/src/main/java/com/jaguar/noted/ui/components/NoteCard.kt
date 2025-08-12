@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.objects.Note
+import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.ui.theme.Typography
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -26,7 +26,7 @@ import java.util.Locale
 
 @Composable
 fun NoteCard(note: Note, onCheckClick: () -> Unit, onClick: () -> Unit) {
-    val isCompleted: Boolean = note.getIsCompleted()
+    val isCompleted: Boolean = note.isCompleted
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -44,14 +44,14 @@ fun NoteCard(note: Note, onCheckClick: () -> Unit, onClick: () -> Unit) {
                     .padding(8.dp)
                     .clickable { onCheckClick() })
             Text(
-                note.getTitle(),
+                note.title,
                 textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                 color = if (isCompleted) Color.Gray else Color.Unspecified
             )
         }
-        if (note.getDueTime() != null) Row(verticalAlignment = Alignment.CenterVertically) {
+        if (note.dueTime != null) Row(verticalAlignment = Alignment.CenterVertically) {
             val dueCalendar = Calendar.getInstance()
-            dueCalendar.timeInMillis = note.getDueTime()!!
+            dueCalendar.timeInMillis = note.dueTime
             val currentCalendar = Calendar.getInstance()
             currentCalendar.timeInMillis = System.currentTimeMillis()
 
