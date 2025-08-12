@@ -33,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.backend.entities.Note
+import com.jaguar.noted.backend.entities.Task
 import com.jaguar.noted.ui.theme.Typography
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -41,18 +41,16 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ViewNoteBottomSheet(
-    note: Note,
+fun NewEventBottomSheet(
     onDismiss: () -> Unit,
-    onDelete: () -> Unit,
-    onSave: (Note) -> Unit,
+    onSave: (Task) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
-    var noteTitle by remember { mutableStateOf(note.title) }
-    var noteDescription by remember { mutableStateOf(note.description) }
-    var noteTags by remember { mutableStateOf(note.tags) }
+    var eventTitle by remember { mutableStateOf("") }
+    var eventDescription by remember { mutableStateOf("") }
+    var eventTags by remember { mutableStateOf(emptyList<String>()) }
 
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -60,12 +58,10 @@ fun ViewNoteBottomSheet(
     val timePickerState = rememberTimePickerState(is24Hour = false)
     var showTimePicker by remember { mutableStateOf(false) }
 
-    val calendar = Calendar.getInstance()
-    var selectedDateMillis by remember { mutableStateOf(note.dueTime) }
-    selectedDateMillis?.let { calendar.timeInMillis = it }
-    var selectedHour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR)) }
-    var selectedMinute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
-    var selectedAfternoon by remember { mutableStateOf(calendar.get(Calendar.AM_PM) == 1) }
+    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
+    var selectedHour by remember { mutableIntStateOf(9) }
+    var selectedMinute by remember { mutableIntStateOf(0) }
+    var selectedAfternoon by remember { mutableStateOf(false) }
 
     if (showDatePicker) DatePickerDialog(
         onDismissRequest = { showDatePicker = false },
@@ -118,13 +114,13 @@ fun ViewNoteBottomSheet(
         onDismissRequest = { onDismiss() }, modifier = modifier
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Note", style = Typography.titleLarge)
+            Text("New Event", style = Typography.titleLarge)
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             OutlinedTextField(
-                noteTitle,
-                { noteTitle = it },
+                eventTitle,
+                { eventTitle = it },
                 singleLine = true,
                 placeholder = { Text("What do you have in your mind...?") },
                 modifier = Modifier
@@ -133,8 +129,8 @@ fun ViewNoteBottomSheet(
             )
 
             OutlinedTextField(
-                noteDescription,
-                { noteDescription = it },
+                eventDescription,
+                { eventDescription = it },
                 placeholder = { Text("Share some thoughts...") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -184,6 +180,7 @@ fun ViewNoteBottomSheet(
                     modifier = Modifier
                         .clip(RoundedCornerShape(25))
                         .clickable { showDatePicker = true }) {
+                    val calendar = Calendar.getInstance()
                     selectedDateMillis?.let { calendar.timeInMillis = it }
                     Box(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
@@ -222,15 +219,12 @@ fun ViewNoteBottomSheet(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                TextButton({
-                    onDelete()
-                    onDismiss()
-                }) {
-                    Text("Delete")
+                TextButton({ onDismiss() }) {
+                    Text("Cancel")
                 }
                 TextButton({
-                    if (noteTitle.isNotEmpty()) {
-                        val newCalendar = Calendar.getInstance()
+                    if (eventTitle.isNotEmpty()) {
+                        val calendar = Calendar.getInstance()
                         selectedDateMillis?.let { calendar.timeInMillis = it }
                         calendar.set(Calendar.HOUR, selectedHour)
                         calendar.set(Calendar.MINUTE, selectedMinute)
@@ -238,10 +232,10 @@ fun ViewNoteBottomSheet(
                         calendar.set(Calendar.MILLISECOND, 0)
                         calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
                         onSave(
-                            note.copy(
-                                title = noteTitle,
-                                description = noteDescription,
-                                tags = noteTags,
+                            Task(
+                                title = eventTitle,
+                                description = eventDescription,
+                                tags = eventTags,
                                 dueTime = calendar.timeInMillis,
                                 isCompleted = false,
                             )

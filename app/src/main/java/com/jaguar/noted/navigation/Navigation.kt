@@ -9,9 +9,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.jaguar.noted.backend.databases.NotesDatabase
-import com.jaguar.noted.backend.viewModels.NotesViewModel
-import com.jaguar.noted.backend.viewModels.NotesViewModelFactory
+import com.jaguar.noted.backend.NotedDatabase
+import com.jaguar.noted.backend.DatabaseViewModel
+import com.jaguar.noted.backend.DatabaseViewModelFactory
 import com.jaguar.noted.ui.bars.Header
 import com.jaguar.noted.ui.bars.Navbar
 import com.jaguar.noted.ui.screens.Home
@@ -23,17 +23,17 @@ fun Navigation() {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val notesViewModel: NotesViewModel = remember {
-        NotesViewModelFactory(
-            NotesDatabase.getDatabase(context).noteDao()
-        ).create(NotesViewModel::class.java)
+    val databaseViewModel: DatabaseViewModel = remember {
+        DatabaseViewModelFactory(
+            NotedDatabase.getDatabase(context).taskDao()
+        ).create(DatabaseViewModel::class.java)
     }
 
     NotedTheme {
         Scaffold(
             topBar = { Header(drawerState = drawerState, scope = scope) },
-            bottomBar = { Navbar(notesViewModel) }) { innerPadding ->
-            Home(notesViewModel = notesViewModel, modifier = Modifier.padding(innerPadding))
+            bottomBar = { Navbar(databaseViewModel) }) { innerPadding ->
+            Home(databaseViewModel = databaseViewModel, modifier = Modifier.padding(innerPadding))
         }
     }
 }

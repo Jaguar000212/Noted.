@@ -1,4 +1,4 @@
-package com.jaguar.noted.backend.typeConverters
+package com.jaguar.noted.backend
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson

@@ -16,42 +16,42 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.backend.entities.Note
-import com.jaguar.noted.backend.viewModels.NotesViewModel
-import com.jaguar.noted.ui.components.NoteCard
-import com.jaguar.noted.ui.components.ViewNoteBottomSheet
+import com.jaguar.noted.backend.entities.Task
+import com.jaguar.noted.backend.DatabaseViewModel
+import com.jaguar.noted.ui.components.EventCard
+import com.jaguar.noted.ui.components.ViewEventBottomSheet
 
 @Composable
-fun Home(notesViewModel: NotesViewModel, modifier: Modifier) {
+fun Home(databaseViewModel: DatabaseViewModel, modifier: Modifier) {
     val context = LocalContext.current
-    val notes: List<Note> by notesViewModel.notes.collectAsState(emptyList())
+    val tasks: List<Task> by databaseViewModel.tasks.collectAsState(emptyList())
 
     var viewNoteSheet by remember { mutableStateOf(false) }
-    var selectedNote by remember { mutableStateOf<Note?>(null) }
+    var selectedTask by remember { mutableStateOf<Task?>(null) }
 
     Box(modifier = modifier) {
         LazyColumn(
             contentPadding = PaddingValues(16.dp)
         ) {
-            if (notes.isEmpty()) item { Text("No notes found") }
-            else items(notes) { note ->
-                NoteCard(note, {
-                    notesViewModel.updateNote(note.copy(isCompleted = !note.isCompleted))
+            if (tasks.isEmpty()) item { Text("No events found") }
+            else items(tasks) { note ->
+                EventCard(note, {
+                    databaseViewModel.updateTask(note.copy(isCompleted = !note.isCompleted))
                     Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
                 }, {
-                    selectedNote = note
+                    selectedTask = note
                     viewNoteSheet = true
                 })
                 HorizontalDivider()
             }
         }
 
-        if (viewNoteSheet && selectedNote != null) {
-            ViewNoteBottomSheet(
-                note = selectedNote!!,
+        if (viewNoteSheet && selectedTask != null) {
+            ViewEventBottomSheet(
+                task = selectedTask!!,
                 onDismiss = { viewNoteSheet = false },
-                onDelete = { notesViewModel.deleteNote(selectedNote!!) },
-                onSave = { notesViewModel.updateNote(it) })
+                onDelete = { databaseViewModel.deleteTask(selectedTask!!) },
+                onSave = { databaseViewModel.updateTask(it) })
         }
     }
 }

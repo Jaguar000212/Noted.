@@ -29,8 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.backend.viewModels.NotesViewModel
-import com.jaguar.noted.ui.components.NewNoteBottomSheet
+import com.jaguar.noted.backend.DatabaseViewModel
+import com.jaguar.noted.ui.components.NewEventBottomSheet
 
 @Composable
 fun Option(icon: ImageVector, text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -47,10 +47,10 @@ fun Option(icon: ImageVector, text: String, modifier: Modifier = Modifier, onCli
 }
 
 @Composable
-fun Navbar(notesViewModel: NotesViewModel) {
+fun Navbar(databaseViewModel: DatabaseViewModel) {
     var showSheet: Boolean by remember { mutableStateOf(false) }
 
-    if (showSheet) NewNoteBottomSheet({ showSheet = false }, { notesViewModel.addNote(note = it) })
+    if (showSheet) NewEventBottomSheet({ showSheet = false }, { databaseViewModel.addTask(task = it) })
     Box {
         BottomAppBar {
             Box(modifier = Modifier.fillMaxWidth()) {
