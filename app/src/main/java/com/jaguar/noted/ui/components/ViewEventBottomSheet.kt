@@ -167,7 +167,7 @@ fun ViewEventBottomSheet(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
                     ) {
                         Text(
-                            String.format("%02d", selectedHour),
+                            String.format(Locale.getDefault(), "%02d", selectedHour),
                             style = Typography.titleLarge,
                             modifier = Modifier.padding(8.dp)
                         )
@@ -176,7 +176,7 @@ fun ViewEventBottomSheet(
                         modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Text(
-                            String.format("%02d", selectedMinute),
+                            String.format(Locale.getDefault(), "%02d", selectedMinute),
                             style = Typography.titleLarge,
                             modifier = Modifier.padding(8.dp)
                         )
@@ -201,7 +201,11 @@ fun ViewEventBottomSheet(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
                     ) {
                         Text(
-                            String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH)),
+                            String.format(
+                                Locale.getDefault(),
+                                "%02d",
+                                calendar.get(Calendar.DAY_OF_MONTH)
+                            ),
                             style = Typography.titleLarge,
                             modifier = Modifier.padding(8.dp)
                         )

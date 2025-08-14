@@ -32,6 +32,51 @@ import com.jaguar.noted.ui.components.ViewEventBottomSheet
 import com.jaguar.noted.ui.theme.Typography
 
 @Composable
+fun TasksList(
+    tasks: List<Task>,
+    modifier: Modifier,
+    onCheckClick: (task: Task) -> Unit,
+    onTaskClick: (task: Task) -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp),
+        modifier = modifier
+    ) {
+        if (tasks.isEmpty()) item { Text("No tasks found") }
+        else items(tasks) { task ->
+            TaskCard(
+                task, onCheckClick = { onCheckClick(task) }) {
+                onTaskClick(task)
+            }
+
+            HorizontalDivider()
+        }
+    }
+}
+
+@Composable
+fun NotesGrid(
+    columns: Int, notes: List<Note>, modifier: Modifier, onNoteClick: (note: Note) -> Unit
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp),
+        modifier = modifier
+    ) {
+        if (notes.isEmpty()) item { Text("No notes found") }
+        else items(notes) { note ->
+            NoteCard(note) {
+                onNoteClick(note)
+            }
+        }
+    }
+
+}
+
+@Composable
 fun Home(databaseViewModel: DatabaseViewModel, modifier: Modifier) {
     val context = LocalContext.current
     val tasks: List<Task> by databaseViewModel.tasks.collectAsState(emptyList())
@@ -44,39 +89,23 @@ fun Home(databaseViewModel: DatabaseViewModel, modifier: Modifier) {
         modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Text("Tasks:", style = Typography.titleLarge, modifier = Modifier.padding(8.dp))
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp), modifier = Modifier.weight(1f)
-        ) {
-            if (tasks.isEmpty()) item { Text("No tasks found") }
-            else items(tasks) { task ->
-                TaskCard(task, {
-                    databaseViewModel.updateEvent(task.copy(isCompleted = !task.isCompleted))
-                    Toast.makeText(context, "Task updated", Toast.LENGTH_SHORT).show()
-                }, {
-                    selectedEvent = task
-                    viewEventSheet = true
-                })
-                HorizontalDivider()
-            }
+        TasksList(
+            tasks, Modifier.weight(1f), { task ->
+                databaseViewModel.updateEvent(task.copy(isCompleted = !task.isCompleted))
+                Toast.makeText(context, "Task updated", Toast.LENGTH_SHORT).show()
+            }) { task ->
+            selectedEvent = task
+            viewEventSheet = true
         }
 
         HorizontalDivider()
         Text("Notes:", style = Typography.titleLarge, modifier = Modifier.padding(8.dp))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            if (notes.isEmpty()) item { Text("No notes found") }
-            else items(notes) { note ->
-                NoteCard(note) {
-                    selectedEvent = note
-                    viewEventSheet = true
-                }
-            }
+        NotesGrid(
+            2, notes, Modifier.weight(1f)
+        ) { note ->
+            selectedEvent = note
+            viewEventSheet = true
         }
     }
 

@@ -15,7 +15,8 @@ import com.jaguar.noted.ui.theme.Typography
 fun NoteCard(note: Note, onClick: () -> Unit) {
     Card({ onClick() }, modifier = Modifier.height(175.dp)) {
         Text(note.title, style = Typography.titleMedium, modifier = Modifier.padding(8.dp))
-        Text(note.description,
+        Text(
+            note.description,
             style = Typography.bodyMedium,
             color = LocalContentColor.current.copy(alpha = 0.7f),
             modifier = Modifier.padding(horizontal = 8.dp),
