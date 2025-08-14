@@ -9,9 +9,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.jaguar.noted.backend.NotedDatabase
 import com.jaguar.noted.backend.DatabaseViewModel
 import com.jaguar.noted.backend.DatabaseViewModelFactory
+import com.jaguar.noted.backend.NotedDatabase
 import com.jaguar.noted.ui.bars.Header
 import com.jaguar.noted.ui.bars.Navbar
 import com.jaguar.noted.ui.screens.Home
@@ -25,7 +25,9 @@ fun Navigation() {
 
     val databaseViewModel: DatabaseViewModel = remember {
         DatabaseViewModelFactory(
-            NotedDatabase.getDatabase(context).taskDao()
+            NotedDatabase.getDatabase(context).taskDao(),
+            NotedDatabase.getDatabase(context).noteDao(),
+            NotedDatabase.getDatabase(context).eventListDao()
         ).create(DatabaseViewModel::class.java)
     }
 

@@ -1,9 +1,15 @@
 package com.jaguar.noted.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -16,42 +22,69 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.jaguar.noted.backend.entities.Task
 import com.jaguar.noted.backend.DatabaseViewModel
-import com.jaguar.noted.ui.components.EventCard
+import com.jaguar.noted.backend.entities.Event
+import com.jaguar.noted.backend.entities.Note
+import com.jaguar.noted.backend.entities.Task
+import com.jaguar.noted.ui.components.NoteCard
+import com.jaguar.noted.ui.components.TaskCard
 import com.jaguar.noted.ui.components.ViewEventBottomSheet
+import com.jaguar.noted.ui.theme.Typography
 
 @Composable
 fun Home(databaseViewModel: DatabaseViewModel, modifier: Modifier) {
     val context = LocalContext.current
     val tasks: List<Task> by databaseViewModel.tasks.collectAsState(emptyList())
+    val notes: List<Note> by databaseViewModel.notes.collectAsState(emptyList())
 
-    var viewNoteSheet by remember { mutableStateOf(false) }
-    var selectedTask by remember { mutableStateOf<Task?>(null) }
+    var viewEventSheet by remember { mutableStateOf(false) }
+    var selectedEvent by remember { mutableStateOf<Event?>(null) }
 
-    Box(modifier = modifier) {
+    Column(
+        modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Text("Tasks:", style = Typography.titleLarge, modifier = Modifier.padding(8.dp))
         LazyColumn(
-            contentPadding = PaddingValues(16.dp)
+            contentPadding = PaddingValues(16.dp), modifier = Modifier.weight(1f)
         ) {
-            if (tasks.isEmpty()) item { Text("No events found") }
-            else items(tasks) { note ->
-                EventCard(note, {
-                    databaseViewModel.updateTask(note.copy(isCompleted = !note.isCompleted))
-                    Toast.makeText(context, "Note updated", Toast.LENGTH_SHORT).show()
+            if (tasks.isEmpty()) item { Text("No tasks found") }
+            else items(tasks) { task ->
+                TaskCard(task, {
+                    databaseViewModel.updateEvent(task.copy(isCompleted = !task.isCompleted))
+                    Toast.makeText(context, "Task updated", Toast.LENGTH_SHORT).show()
                 }, {
-                    selectedTask = note
-                    viewNoteSheet = true
+                    selectedEvent = task
+                    viewEventSheet = true
                 })
                 HorizontalDivider()
             }
         }
 
-        if (viewNoteSheet && selectedTask != null) {
-            ViewEventBottomSheet(
-                task = selectedTask!!,
-                onDismiss = { viewNoteSheet = false },
-                onDelete = { databaseViewModel.deleteTask(selectedTask!!) },
-                onSave = { databaseViewModel.updateTask(it) })
+        HorizontalDivider()
+        Text("Notes:", style = Typography.titleLarge, modifier = Modifier.padding(8.dp))
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            if (notes.isEmpty()) item { Text("No notes found") }
+            else items(notes) { note ->
+                NoteCard(note) {
+                    selectedEvent = note
+                    viewEventSheet = true
+                }
+            }
         }
+    }
+
+    if (viewEventSheet && selectedEvent != null) {
+        ViewEventBottomSheet(
+            event = selectedEvent!!,
+            onDismiss = { viewEventSheet = false },
+            onDelete = { databaseViewModel.deleteEvent(selectedEvent!!) },
+            onSave = { databaseViewModel.updateEvent(it) })
     }
 }

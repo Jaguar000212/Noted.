@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.jaguar.noted.backend.entities.Event
+import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.backend.entities.Task
 import com.jaguar.noted.ui.theme.Typography
 import java.text.SimpleDateFormat
@@ -42,17 +44,21 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewEventBottomSheet(
-    task: Task,
+    event: Event,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    onSave: (Task) -> Unit,
-    modifier: Modifier = Modifier
+    onSave: (Event) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
-    var eventTitle by remember { mutableStateOf(task.title) }
-    var eventDescription by remember { mutableStateOf(task.description) }
-    var eventTags by remember { mutableStateOf(task.tags) }
+    val dueTime = if (event is Task) event.dueTime else null
+    val isTask = event is Task
+    var isDueSet: Boolean by remember { mutableStateOf(false) }
+
+    var eventTitle by remember { mutableStateOf(event.title) }
+    var eventDescription by remember { mutableStateOf(event.description) }
+    var eventTags by remember { mutableStateOf(event.tags) }
 
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -61,57 +67,62 @@ fun ViewEventBottomSheet(
     var showTimePicker by remember { mutableStateOf(false) }
 
     val calendar = Calendar.getInstance()
-    var selectedDateMillis by remember { mutableStateOf(task.dueTime) }
+    var selectedDateMillis by remember { mutableStateOf(dueTime) }
     selectedDateMillis?.let { calendar.timeInMillis = it }
     var selectedHour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR)) }
     var selectedMinute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
     var selectedAfternoon by remember { mutableStateOf(calendar.get(Calendar.AM_PM) == 1) }
 
-    if (showDatePicker) DatePickerDialog(
-        onDismissRequest = { showDatePicker = false },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    showDatePicker = false
-                    selectedDateMillis = datePickerState.selectedDateMillis
-                }) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = { showDatePicker = false }) {
-                Text("Cancel")
-            }
-        }) {
-        DatePicker(state = datePickerState)
-    }
+    if (isTask) {
+        if (showDatePicker) DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDatePicker = false
+                        selectedDateMillis = datePickerState.selectedDateMillis
+                        isDueSet = true
+                    }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }) {
+            DatePicker(state = datePickerState)
+        }
 
-    if (showTimePicker) DatePickerDialog(
-        onDismissRequest = { showTimePicker = false },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    showTimePicker = false
-                    selectedHour =
-                        if (timePickerState.hour > 12) timePickerState.hour - 12 else if (timePickerState.hour == 0) 12 else timePickerState.hour
-                    selectedMinute = timePickerState.minute
-                    selectedAfternoon = timePickerState.isAfternoon
-                }) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = { showTimePicker = false }) {
-                Text("Cancel")
-            }
-        }) {
-        TimePicker(
-            state = timePickerState, modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        )
+        if (showTimePicker) DatePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showTimePicker = false
+                        selectedHour =
+                            if (timePickerState.hour == 0) 12 else if (timePickerState.hour > 12) timePickerState.hour - 12 else timePickerState.hour
+                        selectedMinute = timePickerState.minute
+                        selectedAfternoon = timePickerState.isAfternoon
+                        isDueSet = true
+                    }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showTimePicker = false }) {
+                    Text("Cancel")
+                }
+            }) {
+            TimePicker(
+                state = timePickerState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            )
+        }
     }
 
     ModalBottomSheet(
@@ -139,10 +150,11 @@ fun ViewEventBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                minLines = 5
+                minLines = 5,
+                maxLines = 20
             )
 
-            Row(
+            if (isTask) Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
@@ -230,19 +242,27 @@ fun ViewEventBottomSheet(
                 }
                 TextButton({
                     if (eventTitle.isNotEmpty()) {
-                        selectedDateMillis?.let { calendar.timeInMillis = it }
-                        calendar.set(Calendar.HOUR, selectedHour)
-                        calendar.set(Calendar.MINUTE, selectedMinute)
-                        calendar.set(Calendar.SECOND, 0)
-                        calendar.set(Calendar.MILLISECOND, 0)
-                        calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
-                        onSave(
-                            task.copy(
+                        if (event is Task) {
+                            selectedDateMillis?.let { calendar.timeInMillis = it }
+                            calendar.set(Calendar.HOUR, selectedHour)
+                            calendar.set(Calendar.MINUTE, selectedMinute)
+                            calendar.set(Calendar.SECOND, 0)
+                            calendar.set(Calendar.MILLISECOND, 0)
+                            calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
+                            onSave(
+                                event.copy(
+                                    title = eventTitle,
+                                    description = eventDescription,
+                                    tags = eventTags,
+                                    dueTime = if (isDueSet) calendar.timeInMillis else event.dueTime,
+                                    isCompleted = false,
+                                )
+                            )
+                        } else if (event is Note) onSave(
+                            event.copy(
                                 title = eventTitle,
                                 description = eventDescription,
                                 tags = eventTags,
-                                dueTime = calendar.timeInMillis,
-                                isCompleted = false,
                             )
                         )
                         onDismiss()

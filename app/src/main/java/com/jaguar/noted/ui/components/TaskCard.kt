@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,8 +26,7 @@ import java.util.Calendar
 import java.util.Locale
 
 @Composable
-fun EventCard(task: Task, onCheckClick: () -> Unit, onClick: () -> Unit) {
-    val isCompleted: Boolean = task.isCompleted
+fun TaskCard(task: Task, onCheckClick: () -> Unit, onClick: () -> Unit) {
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -37,16 +37,16 @@ fun EventCard(task: Task, onCheckClick: () -> Unit, onClick: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                if (isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
-                if (isCompleted) "Completed" else "Not Completed",
-                tint = if (isCompleted) Color.Green else Color.Unspecified,
+                if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+                if (task.isCompleted) "Completed" else "Not Completed",
+                tint = if (task.isCompleted) Color.Green else LocalContentColor.current,
                 modifier = Modifier
                     .padding(8.dp)
                     .clickable { onCheckClick() })
             Text(
                 task.title,
-                textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                color = if (isCompleted) Color.Gray else Color.Unspecified
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                color = if (task.isCompleted) Color.Gray else LocalContentColor.current.copy(alpha = 0.8f)
             )
         }
         if (task.dueTime != null) Row(verticalAlignment = Alignment.CenterVertically) {
@@ -67,7 +67,7 @@ fun EventCard(task: Task, onCheckClick: () -> Unit, onClick: () -> Unit) {
                         .uppercase()
                 },
                 style = Typography.bodySmall,
-                color = if (dueCalendar.timeInMillis < System.currentTimeMillis() && !isCompleted) Color.Red else Color.Gray
+                color = if (dueCalendar.timeInMillis < System.currentTimeMillis() && !task.isCompleted) Color.Red else Color.Gray
             )
             Icon(
                 Icons.Outlined.Info,

@@ -10,14 +10,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,8 +50,13 @@ fun Option(icon: ImageVector, text: String, modifier: Modifier = Modifier, onCli
 @Composable
 fun Navbar(databaseViewModel: DatabaseViewModel) {
     var showSheet: Boolean by remember { mutableStateOf(false) }
+    var isTask: Boolean by remember { mutableStateOf(false) }
 
-    if (showSheet) NewEventBottomSheet({ showSheet = false }, { databaseViewModel.addTask(task = it) })
+    if (showSheet) NewEventBottomSheet(
+        { showSheet = false },
+        { databaseViewModel.addEvent(it) },
+        isTask = isTask
+    )
     Box {
         BottomAppBar {
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -72,18 +78,43 @@ fun Navbar(databaseViewModel: DatabaseViewModel) {
                 }
             }
         }
-        FloatingActionButton(
-            {
-                showSheet = !showSheet
-            },
+        SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-30).dp),
-            shape = FloatingActionButtonDefaults.largeShape
+                .offset(y = (-30).dp)
         ) {
-            Icon(
-                Icons.Outlined.Add, "Add", modifier = Modifier.size(36.dp)
-            )
+            SegmentedButton(
+                false, {
+                    isTask = true
+                    showSheet = !showSheet
+                }, shape = AbsoluteRoundedCornerShape(
+                    topLeftPercent = 25,
+                    topRightPercent = 0,
+                    bottomLeftPercent = 25,
+                    bottomRightPercent = 0
+                ), icon = {
+                    Icon(
+                        Icons.Outlined.Add, "Add", modifier = Modifier.size(36.dp)
+                    )
+                }) {
+                Text("Task")
+            }
+            SegmentedButton(
+                false, {
+                    isTask = false
+                    showSheet = !showSheet
+                }, shape = AbsoluteRoundedCornerShape(
+                    topLeftPercent = 0,
+                    topRightPercent = 25,
+                    bottomLeftPercent = 0,
+                    bottomRightPercent = 25
+                ), icon = {
+                    Icon(
+                        Icons.Outlined.Add, "Add", modifier = Modifier.size(36.dp)
+                    )
+                }) {
+                Text("Note")
+            }
         }
     }
 }

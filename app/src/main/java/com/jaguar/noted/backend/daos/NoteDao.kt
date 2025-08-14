@@ -5,20 +5,20 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.jaguar.noted.backend.entities.Task
+import com.jaguar.noted.backend.entities.Note
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface TaskDao {
+interface NoteDao {
     @Insert
-    suspend fun insert(task: Task)
+    suspend fun insert(note: Note)
 
     @Update
-    suspend fun update(task: Task)
+    suspend fun update(note: Note)
 
     @Delete
-    suspend fun delete(task: Task)
+    suspend fun delete(note: Note)
 
-    @Query("SELECT * FROM Tasks")
-    fun getAll(): Flow<List<Task>>
+    @Query("SELECT * FROM Notes")
+    fun getAll(): Flow<List<Note>>
 }
