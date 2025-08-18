@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.jaguar.noted.backend.entities.Note
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface NoteDao {
@@ -21,4 +22,7 @@ interface NoteDao {
 
     @Query("SELECT * FROM Notes")
     fun getAll(): Flow<List<Note>>
+
+    @Query("SELECT * FROM Notes WHERE listId = :lId")
+    fun getNotesByList(lId: UUID): Flow<List<Note>>
 }

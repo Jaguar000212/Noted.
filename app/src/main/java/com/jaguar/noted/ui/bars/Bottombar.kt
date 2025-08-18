@@ -1,6 +1,5 @@
 package com.jaguar.noted.ui.bars
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +21,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,7 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.jaguar.noted.backend.DatabaseViewModel
+import com.jaguar.noted.navigation.Home
+import com.jaguar.noted.navigation.Settings
 import com.jaguar.noted.ui.components.NewEventBottomSheet
 
 @Composable
@@ -48,11 +51,13 @@ fun Option(icon: ImageVector, text: String, modifier: Modifier = Modifier, onCli
 }
 
 @Composable
-fun Navbar(databaseViewModel: DatabaseViewModel) {
+fun Navbar(databaseViewModel: DatabaseViewModel, navController: NavController) {
     var showSheet: Boolean by remember { mutableStateOf(false) }
     var isTask: Boolean by remember { mutableStateOf(false) }
+    val eventLists by databaseViewModel.eventLists.collectAsState(initial = emptyList())
 
     if (showSheet) NewEventBottomSheet(
+        eventLists,
         { showSheet = false },
         { databaseViewModel.addEvent(it) },
         isTask = isTask
@@ -71,10 +76,10 @@ fun Navbar(databaseViewModel: DatabaseViewModel) {
                         modifier = Modifier
                             .fillMaxWidth(0.5f)
                             .fillMaxHeight()
-                    ) { Log.i("TODO", "Home Clicked!") }
+                    ) { navController.navigate(Home.route) }
                     Option(
                         Icons.Outlined.Settings, "Settings", modifier = Modifier.fillMaxSize()
-                    ) { Log.i("TODO", "Settings Clicked!") }
+                    ) { navController.navigate(Settings.route) }
                 }
             }
         }
@@ -118,3 +123,4 @@ fun Navbar(databaseViewModel: DatabaseViewModel) {
         }
     }
 }
+

@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.jaguar.noted.backend.entities.Task
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface TaskDao {
@@ -21,4 +22,7 @@ interface TaskDao {
 
     @Query("SELECT * FROM Tasks")
     fun getAll(): Flow<List<Task>>
+
+    @Query("SELECT * FROM Tasks WHERE listId = :lId")
+    fun getTasksByList(lId: UUID): Flow<List<Task>>
 }

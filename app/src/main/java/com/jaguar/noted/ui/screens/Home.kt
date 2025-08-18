@@ -32,55 +32,11 @@ import com.jaguar.noted.ui.components.ViewEventBottomSheet
 import com.jaguar.noted.ui.theme.Typography
 
 @Composable
-fun TasksList(
-    tasks: List<Task>,
-    modifier: Modifier,
-    onCheckClick: (task: Task) -> Unit,
-    onTaskClick: (task: Task) -> Unit
-) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(16.dp),
-        modifier = modifier
-    ) {
-        if (tasks.isEmpty()) item { Text("No tasks found") }
-        else items(tasks) { task ->
-            TaskCard(
-                task, onCheckClick = { onCheckClick(task) }) {
-                onTaskClick(task)
-            }
-
-            HorizontalDivider()
-        }
-    }
-}
-
-@Composable
-fun NotesGrid(
-    columns: Int, notes: List<Note>, modifier: Modifier, onNoteClick: (note: Note) -> Unit
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(16.dp),
-        modifier = modifier
-    ) {
-        if (notes.isEmpty()) item { Text("No notes found") }
-        else items(notes) { note ->
-            NoteCard(note) {
-                onNoteClick(note)
-            }
-        }
-    }
-
-}
-
-@Composable
 fun Home(databaseViewModel: DatabaseViewModel, modifier: Modifier) {
     val context = LocalContext.current
     val tasks: List<Task> by databaseViewModel.tasks.collectAsState(emptyList())
     val notes: List<Note> by databaseViewModel.notes.collectAsState(emptyList())
+    val eventLists by databaseViewModel.eventLists.collectAsState(emptyList())
 
     var viewEventSheet by remember { mutableStateOf(false) }
     var selectedEvent by remember { mutableStateOf<Event?>(null) }
@@ -89,29 +45,55 @@ fun Home(databaseViewModel: DatabaseViewModel, modifier: Modifier) {
         modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Text("Tasks:", style = Typography.titleLarge, modifier = Modifier.padding(8.dp))
-        TasksList(
-            tasks, Modifier.weight(1f), { task ->
-                databaseViewModel.updateEvent(task.copy(isCompleted = !task.isCompleted))
-                Toast.makeText(context, "Task updated", Toast.LENGTH_SHORT).show()
-            }) { task ->
-            selectedEvent = task
-            viewEventSheet = true
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            if (tasks.isEmpty()) item { Text("No tasks found") }
+            else items(tasks.sortedWith { t1, t2 ->
+                (t1.dueTime ?: Long.MAX_VALUE).compareTo(
+                    t2.dueTime ?: Long.MAX_VALUE
+                )
+            }.sortedBy { it.isCompleted }) { task ->
+                TaskCard(
+                    task, onCheckClick = {
+                        databaseViewModel.updateEvent(task.copy(isCompleted = !task.isCompleted))
+                        Toast.makeText(context, "Task updated", Toast.LENGTH_SHORT).show()
+                    }) {
+                    selectedEvent = task
+                    viewEventSheet = true
+                }
+
+                HorizontalDivider()
+            }
         }
 
         HorizontalDivider()
         Text("Notes:", style = Typography.titleLarge, modifier = Modifier.padding(8.dp))
 
-        NotesGrid(
-            2, notes, Modifier.weight(1f)
-        ) { note ->
-            selectedEvent = note
-            viewEventSheet = true
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            if (notes.isEmpty()) item { Text("No notes found") }
+            else items(notes) { note ->
+                NoteCard(note) {
+                    selectedEvent = note
+                    viewEventSheet = true
+                }
+            }
         }
     }
 
     if (viewEventSheet && selectedEvent != null) {
         ViewEventBottomSheet(
             event = selectedEvent!!,
+            eventLists = eventLists,
             onDismiss = { viewEventSheet = false },
             onDelete = { databaseViewModel.deleteEvent(selectedEvent!!) },
             onSave = { databaseViewModel.updateEvent(it) })

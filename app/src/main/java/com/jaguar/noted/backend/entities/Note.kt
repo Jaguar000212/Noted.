@@ -18,5 +18,5 @@ data class Note(
     override val title: String,
     override val description: String,
     override val tags: List<String> = emptyList(),
-    val listId: UUID? = null
+    override val listId: UUID? = null
 ) : Event

@@ -7,15 +7,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jaguar.noted.backend.entities.Event
+import com.jaguar.noted.backend.entities.EventList
 import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.backend.entities.Task
 import com.jaguar.noted.ui.theme.Typography
@@ -45,6 +51,7 @@ import java.util.Locale
 @Composable
 fun ViewEventBottomSheet(
     event: Event,
+    eventLists: List<EventList>,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
     onSave: (Event) -> Unit,
@@ -55,10 +62,14 @@ fun ViewEventBottomSheet(
     val dueTime = if (event is Task) event.dueTime else null
     val isTask = event is Task
     var isDueSet: Boolean by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     var eventTitle by remember { mutableStateOf(event.title) }
     var eventDescription by remember { mutableStateOf(event.description) }
     var eventTags by remember { mutableStateOf(event.tags) }
+    var eventList: EventList by remember {
+        mutableStateOf(eventLists.find { it.id == event.listId } ?: eventLists[0])
+    }
 
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -167,25 +178,25 @@ fun ViewEventBottomSheet(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
                     ) {
                         Text(
-                            String.format(Locale.getDefault(), "%02d", selectedHour),
-                            style = Typography.titleLarge,
-                            modifier = Modifier.padding(8.dp)
+                            if (!isDueSet && dueTime == null) "-" else String.format(
+                                Locale.getDefault(), "%02d", selectedHour
+                            ), style = Typography.titleLarge, modifier = Modifier.padding(8.dp)
                         )
                     }
                     Box(
                         modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Text(
-                            String.format(Locale.getDefault(), "%02d", selectedMinute),
-                            style = Typography.titleLarge,
-                            modifier = Modifier.padding(8.dp)
+                            if (!isDueSet && dueTime == null) "-" else String.format(
+                                Locale.getDefault(), "%02d", selectedMinute
+                            ), style = Typography.titleLarge, modifier = Modifier.padding(8.dp)
                         )
                     }
                     Box(
                         modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer)
                     ) {
                         Text(
-                            if (selectedAfternoon) "PM" else "AM",
+                            if (!isDueSet && dueTime == null) "-" else if (selectedAfternoon) "PM" else "AM",
                             style = Typography.titleLarge,
                             modifier = Modifier.padding(8.dp)
                         )
@@ -201,21 +212,18 @@ fun ViewEventBottomSheet(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer)
                     ) {
                         Text(
-                            String.format(
-                                Locale.getDefault(),
-                                "%02d",
-                                calendar.get(Calendar.DAY_OF_MONTH)
-                            ),
-                            style = Typography.titleLarge,
-                            modifier = Modifier.padding(8.dp)
+                            if (!isDueSet && dueTime == null) "-" else String.format(
+                                Locale.getDefault(), "%02d", calendar.get(Calendar.DAY_OF_MONTH)
+                            ), style = Typography.titleLarge, modifier = Modifier.padding(8.dp)
                         )
                     }
                     Box(
                         modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
                     ) {
                         Text(
-                            SimpleDateFormat("MMM", Locale.getDefault()).format(calendar.time)
-                                .uppercase(),
+                            if (!isDueSet && dueTime == null) "-" else SimpleDateFormat(
+                                "MMM", Locale.getDefault()
+                            ).format(calendar.time).uppercase(),
                             style = Typography.titleLarge,
                             modifier = Modifier.padding(8.dp)
                         )
@@ -224,7 +232,8 @@ fun ViewEventBottomSheet(
                         modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer)
                     ) {
                         Text(
-                            calendar.get(Calendar.YEAR).toString(),
+                            if (!isDueSet && dueTime == null) "-" else calendar.get(Calendar.YEAR)
+                                .toString(),
                             style = Typography.titleLarge,
                             modifier = Modifier.padding(8.dp)
                         )
@@ -233,47 +242,71 @@ fun ViewEventBottomSheet(
             }
 
             Row(
-                horizontalArrangement = Arrangement.End,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.TopStart)
             ) {
-                TextButton({
-                    onDelete()
-                    onDismiss()
-                }) {
-                    Text("Delete")
+                OutlinedButton(onClick = { expanded = true }) {
+                    Text(eventList.emoji, modifier = Modifier.padding(8.dp))
+                    Text(eventList.name)
                 }
-                TextButton({
-                    if (eventTitle.isNotEmpty()) {
-                        if (event is Task) {
-                            selectedDateMillis?.let { calendar.timeInMillis = it }
-                            calendar.set(Calendar.HOUR, selectedHour)
-                            calendar.set(Calendar.MINUTE, selectedMinute)
-                            calendar.set(Calendar.SECOND, 0)
-                            calendar.set(Calendar.MILLISECOND, 0)
-                            calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
-                            onSave(
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    eventLists.forEach {
+                        DropdownMenuItem(text = {
+                            Text(
+                                it.name, modifier = Modifier.padding(8.dp)
+                            )
+                        }, leadingIcon = { Text(it.emoji) }, onClick = {
+                            eventList = it
+                            expanded = false
+                        })
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    TextButton({
+                        onDelete()
+                        onDismiss()
+                    }) {
+                        Text("Delete")
+                    }
+                    TextButton({
+                        if (eventTitle.isNotEmpty()) {
+                            if (event is Task) {
+                                selectedDateMillis?.let { calendar.timeInMillis = it }
+                                calendar.set(Calendar.HOUR, selectedHour)
+                                calendar.set(Calendar.MINUTE, selectedMinute)
+                                calendar.set(Calendar.SECOND, 0)
+                                calendar.set(Calendar.MILLISECOND, 0)
+                                calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
+                                onSave(
+                                    event.copy(
+                                        title = eventTitle,
+                                        description = eventDescription,
+                                        tags = eventTags,
+                                        dueTime = if (isDueSet) calendar.timeInMillis else event.dueTime,
+                                        isCompleted = false,
+                                        listId = eventList.id
+                                    )
+                                )
+                            } else if (event is Note) onSave(
                                 event.copy(
                                     title = eventTitle,
                                     description = eventDescription,
                                     tags = eventTags,
-                                    dueTime = if (isDueSet) calendar.timeInMillis else event.dueTime,
-                                    isCompleted = false,
                                 )
                             )
-                        } else if (event is Note) onSave(
-                            event.copy(
-                                title = eventTitle,
-                                description = eventDescription,
-                                tags = eventTags,
-                            )
-                        )
-                        onDismiss()
-                    } else Toast.makeText(context, "Please enter a title", Toast.LENGTH_SHORT)
-                        .show()
-                }) {
-                    Text("Save")
+                            onDismiss()
+                        } else Toast.makeText(context, "Please enter a title", Toast.LENGTH_SHORT)
+                            .show()
+                    }) {
+                        Text("Save")
+                    }
                 }
             }
         }

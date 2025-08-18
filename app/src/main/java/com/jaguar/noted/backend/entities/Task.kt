@@ -20,7 +20,7 @@ data class Task(
     override val tags: List<String> = emptyList(),
     val dueTime: Long?,
     val isCompleted: Boolean,
-    val listId: UUID? = null
+    override val listId: UUID? = null
 ) : Event {
     override fun toString(): String {
         return """

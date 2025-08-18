@@ -14,7 +14,7 @@ import com.jaguar.noted.backend.entities.Task
 
 @Database(
     entities = [Task::class, Note::class, EventList::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -11,6 +11,11 @@ import com.jaguar.noted.backend.entities.EventList
 import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.backend.entities.Task
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class DatabaseViewModel(
@@ -18,9 +23,30 @@ class DatabaseViewModel(
     private val noteDao: NoteDao,
     private val eventListDao: EventListDao
 ) : ViewModel() {
-    val tasks: Flow<List<Task>> = taskDao.getAll()
-    val notes: Flow<List<Note>> = noteDao.getAll()
+    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
+    val tasks: StateFlow<List<Task>> = _tasks
+
+    private val _notes = MutableStateFlow<List<Note>>(emptyList())
+    val notes: StateFlow<List<Note>> = _notes
+
     val eventLists: Flow<List<EventList>> = eventListDao.getAll()
+
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> get() = _isReady
+
+    fun initConfigs() {
+        viewModelScope.launch {
+            getEvents()
+            _isReady.value = true
+            launch {
+                eventLists.collectLatest { lists ->
+                    if (lists.isEmpty()) {
+                        eventListDao.insert(EventList(name = "Inbox", emoji = "📥"))
+                    }
+                }
+            }
+        }
+    }
 
     fun addEvent(event: Event) {
         viewModelScope.launch {
@@ -40,6 +66,26 @@ class DatabaseViewModel(
         viewModelScope.launch {
             if (event is Task) taskDao.delete(event)
             else if (event is Note) noteDao.delete(event)
+        }
+    }
+
+    fun getEvents(eventList: EventList? = null) {
+        viewModelScope.launch {
+            if (eventList != null) {
+                combine(
+                    noteDao.getNotesByList(eventList.id), taskDao.getTasksByList(eventList.id)
+                ) { notes, tasks ->
+                    _notes.value = notes
+                    _tasks.value = tasks
+                }.collect()
+            } else {
+                combine(
+                    noteDao.getAll(), taskDao.getAll()
+                ) { notes, tasks ->
+                    _notes.value = notes
+                    _tasks.value = tasks
+                }.collect()
+            }
         }
     }
 
@@ -69,8 +115,9 @@ class DatabaseViewModelFactory(
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DatabaseViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return DatabaseViewModel(taskDao, noteDao, eventListDao) as T
+            @Suppress("UNCHECKED_CAST") return DatabaseViewModel(
+                taskDao, noteDao, eventListDao
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

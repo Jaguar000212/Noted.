@@ -7,15 +7,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jaguar.noted.backend.entities.Event
+import com.jaguar.noted.backend.entities.EventList
 import com.jaguar.noted.backend.entities.Note
 import com.jaguar.noted.backend.entities.Task
 import com.jaguar.noted.ui.theme.Typography
@@ -44,14 +50,20 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewEventBottomSheet(
-    onDismiss: () -> Unit, onSave: (Event) -> Unit, isTask: Boolean, modifier: Modifier = Modifier
+    eventLists: List<EventList>,
+    onDismiss: () -> Unit,
+    onSave: (Event) -> Unit,
+    isTask: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var isDue: Boolean by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     var eventTitle by remember { mutableStateOf("") }
     var eventDescription by remember { mutableStateOf("") }
     var eventTags by remember { mutableStateOf(emptyList<String>()) }
+    var eventList: EventList by remember { mutableStateOf(eventLists[0]) }
 
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -194,12 +206,8 @@ fun NewEventBottomSheet(
                     ) {
                         Text(
                             String.format(
-                                Locale.getDefault(),
-                                "%02d",
-                                calendar.get(Calendar.DAY_OF_MONTH)
-                            ),
-                            style = Typography.titleLarge,
-                            modifier = Modifier.padding(8.dp)
+                                Locale.getDefault(), "%02d", calendar.get(Calendar.DAY_OF_MONTH)
+                            ), style = Typography.titleLarge, modifier = Modifier.padding(8.dp)
                         )
                     }
                     Box(
@@ -225,45 +233,69 @@ fun NewEventBottomSheet(
             }
 
             Row(
-                horizontalArrangement = Arrangement.End,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.TopStart)
             ) {
-                TextButton({ onDismiss() }) {
-                    Text("Cancel")
+                OutlinedButton(onClick = { expanded = true }) {
+                    Text(eventList.emoji, modifier = Modifier.padding(8.dp))
+                    Text(eventList.name)
                 }
-                TextButton({
-                    if (eventTitle.isNotEmpty()) {
-                        if (isTask) {
-                            val calendar = Calendar.getInstance()
-                            selectedDateMillis?.let { calendar.timeInMillis = it }
-                            calendar.set(Calendar.HOUR, selectedHour)
-                            calendar.set(Calendar.MINUTE, selectedMinute)
-                            calendar.set(Calendar.SECOND, 0)
-                            calendar.set(Calendar.MILLISECOND, 0)
-                            calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
-                            onSave(
-                                Task(
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    eventLists.forEach {
+                        DropdownMenuItem(text = {
+                            Text(
+                                it.name, modifier = Modifier.padding(8.dp)
+                            )
+                        }, leadingIcon = { Text(it.emoji) }, onClick = {
+                            eventList = it
+                            expanded = false
+                        })
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    TextButton({ onDismiss() }) {
+                        Text("Cancel")
+                    }
+                    TextButton({
+                        if (eventTitle.isNotEmpty()) {
+                            if (isTask) {
+                                val calendar = Calendar.getInstance()
+                                selectedDateMillis?.let { calendar.timeInMillis = it }
+                                calendar.set(Calendar.HOUR, selectedHour)
+                                calendar.set(Calendar.MINUTE, selectedMinute)
+                                calendar.set(Calendar.SECOND, 0)
+                                calendar.set(Calendar.MILLISECOND, 0)
+                                calendar.set(Calendar.AM_PM, if (selectedAfternoon) 1 else 0)
+                                onSave(
+                                    Task(
+                                        title = eventTitle,
+                                        description = eventDescription,
+                                        tags = eventTags,
+                                        dueTime = if (isDue) calendar.timeInMillis else null,
+                                        isCompleted = false,
+                                        listId = eventList.id
+                                    )
+                                )
+                            } else onSave(
+                                Note(
                                     title = eventTitle,
                                     description = eventDescription,
                                     tags = eventTags,
-                                    dueTime = if (isDue) calendar.timeInMillis else null,
-                                    isCompleted = false,
                                 )
                             )
-                        } else onSave(
-                            Note(
-                                title = eventTitle,
-                                description = eventDescription,
-                                tags = eventTags,
-                            )
-                        )
-                        onDismiss()
-                    } else Toast.makeText(context, "Please enter a title", Toast.LENGTH_SHORT)
-                        .show()
-                }) {
-                    Text("Save")
+                            onDismiss()
+                        } else Toast.makeText(context, "Please enter a title", Toast.LENGTH_SHORT)
+                            .show()
+                    }) {
+                        Text("Save")
+                    }
                 }
             }
         }
